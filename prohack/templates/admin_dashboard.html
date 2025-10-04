@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .stats-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+         .category-badge {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: #fff;
+            font-weight: 500;
+        }
+        .category-food { background-color: #ff6384; }
+        .category-transport { background-color: #36a2eb; }
+        .category-entertainment { background-color: #ffce56; color: #333; }
+        .category-bills { background-color: #4bc0c0; }
+        .category-other { background-color: #9966ff; }
+    </style>
+</head>
+<body>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-crown mr-2"></i>Admin Dashboard</h1>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Admin Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ users_analytics|length }}</h3>
+                        <p class="mb-0 text-muted">Total Users</p>
+                    </div>
+                    <i class="fas fa-users fa-2x text-primary opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ all_expenses|length }}</h3>
+                        <p class="mb-0 text-muted">Total Expenses Logged</p>
+                    </div>
+                    <i class="fas fa-receipt fa-2x text-info opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>₹{{ "%.2f"|format(total_spent) }}</h3>
+                        <p class="mb-0 text-muted">Total Amount Spent</p>
+                    </div>
+                    <i class="fas fa-wallet fa-2x text-success opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ category_breakdown|length }}</h3>
+                        <p class="mb-0 text-muted">Unique Categories</p>
+                    </div>
+                    <i class="fas fa-tags fa-2x text-warning opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">User Spending Comparison</h5>
+                    <div class="chart-container">
+                        <canvas id="userComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Overall Category Breakdown</h5>
+                    <div class="chart-container">
+                        <canvas id="categoryBreakdownChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Analytics -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-line mr-2"></i>User Analytics</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Weekly Total</th>
+                            <th>Monthly Total</th>
+                            <th>All-Time Total</th>
+                            <th>Join Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users_analytics %}
+                        <tr>
+                            <td><i class="fas fa-user mr-2 text-muted"></i>{{ user.username }}</td>
+                            <td><span class="badge badge-pill badge-info">₹{{ "%.2f"|format(user.weekly_total) }}</span></td>
+                            <td><span class="badge badge-pill badge-success">₹{{ "%.2f"|format(user.monthly_total) }}</span></td>
+                            <td><strong>₹{{ "%.2f"|format(user.total_amount) }}</strong></td>
+                            <td><small class="text-muted">{{ user.created_at.strftime('%Y-%m-%d') }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Expenses -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list mr-2"></i>All Logged Expenses</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in all_expenses %}
+                        <tr>
+                            <td><i class="fas fa-user mr-2 text-muted"></i>{{ expense.username }}</td>
+                            <td>
+                                <span class="category-badge category-{{ expense.category|replace(' ', '')|lower() }}">
+                                    {{ expense.category }}
+                                </span>
+                            </td>
+                            <td><strong>₹{{ "%.2f"|format(expense.amount) }}</strong></td>
+                            <td><small class="text-muted">{{ expense.description or 'N/A' }}</small></td>
+                            <td><small class="text-muted">{{ expense.expense_date.strftime('%Y-%m-%d') }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // User comparison chart
+    const usersAnalytics = {{ users_analytics|tojson }};
+    const userLabels = usersAnalytics.map(item => item.username);
+    const userValues = usersAnalytics.map(item => item.total_amount);
+
+    if (document.getElementById('userComparisonChart')) {
+        const userComparisonCtx = document.getElementById('userComparisonChart').getContext('2d');
+        new Chart(userComparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: userLabels,
+                datasets: [{
+                    label: 'Total Spending (₹)',
+                    data: userValues,
+                    backgroundColor: '#36a2eb'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Category breakdown chart
+    const categoryBreakdown = {{ category_breakdown|tojson }};
+    const categoryLabels = categoryBreakdown.map(item => item.category);
+    const categoryValues = categoryBreakdown.map(item => item.total);
+
+    if (document.getElementById('categoryBreakdownChart')) {
+        const categoryBreakdownCtx = document.getElementById('categoryBreakdownChart').getContext('2d');
+        new Chart(categoryBreakdownCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryValues,
+                    backgroundColor: ['#ff6384','#36a2eb','#ffce56','#4bc0c0','#9966ff', '#ff9f40', '#c9cbcf']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    }
+</script>
+</body>
+</html>
