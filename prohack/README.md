@@ -28,3 +28,4 @@ The system allows users to log their daily, weekly, and monthly expenses, while 
 💰 Monitor Individual User Expenses (weekly & monthly totals).
 📈 Visual Insights Dashboard using charts and stats.
 🗄️ Full Authority over user and expense management.
+
